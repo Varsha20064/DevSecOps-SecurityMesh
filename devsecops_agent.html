@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevSecOps Security Mesh — Agent Interface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181b22;
+    --surface3: #1e2229;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8ecf0;
+    --muted: #7a8394;
+    --accent: #00d4aa;
+    --accent2: #4fa3ff;
+    --accent3: #ff6b6b;
+    --accent4: #ffc455;
+    --accent5: #b96eff;
+    --mono: 'IBM Plex Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-header {
+    padding: 20px 16px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  .module-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+
+  .module-section-label {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 12px 16px 6px;
+  }
+
+  .module-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .module-item:hover { background: var(--surface2); color: var(--text); }
+
+  .module-item.active {
+    background: var(--surface2);
+    color: var(--text);
+    border-left-color: var(--accent);
+  }
+
+  .mod-icon {
+    width: 24px; height: 24px;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    margin-left: auto;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  .badge-pass { background: rgba(0,212,170,0.15); color: var(--accent); }
+  .badge-fail { background: rgba(255,107,107,0.15); color: var(--accent3); }
+  .badge-warn { background: rgba(255,196,85,0.15); color: var(--accent4); }
+  .badge-info { background: rgba(79,163,255,0.15); color: var(--accent2); }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .topbar {
+    height: 52px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .topbar-title {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .topbar-path {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .topbar-sep { color: var(--border2); }
+
+  .status-chip {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface2);
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  /* CONTENT AREA */
+  .content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    gap: 0;
+  }
+
+  .chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+
+  .msg {
+    display: flex;
+    gap: 12px;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-avatar {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  .avatar-agent { background: rgba(0,212,170,0.15); color: var(--accent); border: 1px solid rgba(0,212,170,0.3); }
+  .avatar-user { background: rgba(79,163,255,0.15); color: var(--accent2); border: 1px solid rgba(79,163,255,0.3); }
+
+  .msg-body { flex: 1; min-width: 0; }
+
+  .msg-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  .msg-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text);
+    font-family: var(--display);
+  }
+
+  .msg-time { font-size: 10px; color: var(--muted); }
+
+  .msg-text {
+    font-size: 13px;
+    color: #c8cdd6;
+    line-height: 1.65;
+  }
+
+  .msg-text code {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent4);
+  }
+
+  /* Tool call blocks */
+  .tool-call {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent5);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    font-size: 11px;
+  }
+
+  .tool-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    color: var(--accent5);
+    font-weight: 500;
+  }
+
+  .tool-content { color: var(--muted); line-height: 1.7; }
+
+  /* Result blocks */
+  .result-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 8px;
+  }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .finding-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .finding-row:last-child { border-bottom: none; }
+
+  .sev {
+    font-size: 9px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 3px;
+    min-width: 46px;
+    text-align: center;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .sev-high { background: rgba(255,107,107,0.2); color: #ff8080; }
+  .sev-med { background: rgba(255,196,85,0.2); color: #ffc455; }
+  .sev-low { background: rgba(0,212,170,0.15); color: #00d4aa; }
+  .sev-crit { background: rgba(185,110,255,0.2); color: #b96eff; }
+
+  .finding-desc { color: #c8cdd6; line-height: 1.5; }
+  .finding-loc { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* Security score */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .score-card {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .score-val {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+
+  .score-label { font-size: 10px; color: var(--muted); }
+
+  /* Input area */
+  .input-area {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .quick-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .qa-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .qa-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,212,170,0.06);
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .input-wrap {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    transition: border-color 0.15s;
+  }
+
+  .input-wrap:focus-within { border-color: rgba(0,212,170,0.5); }
+
+  textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    resize: none;
+    padding: 10px 0;
+    line-height: 1.5;
+    max-height: 120px;
+  }
+
+  textarea::placeholder { color: var(--muted); }
+
+  .send-btn {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    color: #000;
+    font-size: 15px;
+  }
+
+  .send-btn:hover { background: #00f0c0; transform: scale(1.03); }
+  .send-btn:active { transform: scale(0.97); }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.04em;
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+
+  /* Pipeline stages */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .pipe-stage {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 11px;
+  }
+
+  .pipe-icon {
+    width: 22px; height: 22px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .pipe-name { color: var(--text); }
+  .pipe-status { margin-left: auto; font-size: 10px; }
+
+  .pass { color: var(--accent); }
+  .fail { color: var(--accent3); }
+  .warn { color: var(--accent4); }
+  .running { color: var(--accent2); }
+
+  /* Threat radar */
+  .threat-meter {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .threat-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .threat-bars { display: flex; flex-direction: column; gap: 5px; }
+
+  .threat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+  }
+
+  .threat-name { width: 60px; color: var(--muted); flex-shrink: 0; }
+
+  .bar-track {
+    flex: 1;
+    height: 4px;
+    background: var(--surface3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  .threat-pct { width: 28px; text-align: right; font-size: 10px; color: var(--muted); }
+
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin: 14px 0 8px;
+  }
+
+  /* Typing indicator */
+  .typing {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 2px 0;
+  }
+
+  .typing span {
+    width: 6px; height: 6px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: blink 1.2s infinite;
+  }
+
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes blink {
+    0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+    30% { opacity: 1; transform: scale(1); }
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <span class="logo-dot"></span>
+      SecurityMesh
+    </div>
+    <div class="logo-sub">DevSecOps Agent v2.4.1</div>
+  </div>
+
+  <div class="module-list">
+    <div class="module-section-label">Scanning Modules</div>
+
+    <div class="module-item active" onclick="switchModule(this,'SAST')">
+      <div class="mod-icon" style="background:rgba(255,107,107,0.12);">🔍</div>
+      <span>SAST Analysis</span>
+      <span class="badge badge-fail">3 HIGH</span>
+    </div>
+
+    <div class="module-item" onclick="switchModule(this,'SCA')">
+      <div class="mod-icon" style="background:rgba(255,196,85,0.12);">📦</div>
+      <span>SCA / Deps</span>
+      <span class="badge badge-warn">7 CVEs</span>
+    </div>
+
+    <div class="module-item" onclick="switchModule(this,'Container')">
+      <div class="mod-icon" style="background:rgba(185,110,255,0.12);">🐳</div>
+      <span>Container Scan</span>
+      <span class="badge badge-fail">CRIT</span>
+    </div>
+
+    <div class="module-item" onclick="switchModule(this,'DAST')">
+      <div class="mod-icon" style="background:rgba(79,163,255,0.12);">🌐</div>
+      <span>DAST</span>
+      <span class="badge badge-fail">2 VULNS</span>
+    </div>
+
+    <div class="module-section-label">Hardening</div>
+
+    <div class="module-item" onclick="switchModule(this,'Secrets')">
+      <div class="mod-icon" style="background:rgba(0,212,170,0.12);">🔐</div>
+      <span>Secret Mgmt</span>
+      <span class="badge badge-pass">PASS</span>
+    </div>
+
+    <div class="module-item" onclick="switchModule(this,'Auth')">
+      <div class="mod-icon" style="background:rgba(0,212,170,0.12);">👤</div>
+      <span>Auth & RBAC</span>
+      <span class="badge badge-pass">PASS</span>
+    </div>
+
+    <div class="module-item" onclick="switchModule(this,'Encryption')">
+      <div class="mod-icon" style="background:rgba(0,212,170,0.12);">🔒</div>
+      <span>Data Encryption</span>
+      <span class="badge badge-pass">PASS</span>
+    </div>
+
+    <div class="module-item" onclick="switchModule(this,'Threat')">
+      <div class="mod-icon" style="background:rgba(255,196,85,0.12);">⚠️</div>
+      <span>Threat Modeling</span>
+      <span class="badge badge-warn">STRIDE</span>
+    </div>
+
+    <div class="module-item" onclick="switchModule(this,'Privacy')">
+      <div class="mod-icon" style="background:rgba(79,163,255,0.12);">🛡️</div>
+      <span>Privacy by Design</span>
+      <span class="badge badge-info">7 PbD</span>
+    </div>
+
+    <div class="module-section-label">Pipeline</div>
+
+    <div class="module-item" onclick="switchModule(this,'CICD')">
+      <div class="mod-icon" style="background:rgba(185,110,255,0.12);">⚙️</div>
+      <span>CI/CD Gates</span>
+      <span class="badge badge-fail">BLOCKED</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title" id="topbar-title">SAST Analysis</div>
+    <span class="topbar-sep">›</span>
+    <div class="topbar-path" id="topbar-path">bandit / vulnerable_app.py</div>
+    <div class="status-chip">
+      <span class="status-dot"></span>
+      Agent ready
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="chat-area">
+      <div class="messages" id="messages">
+
+        <!-- Welcome message -->
+        <div class="msg">
+          <div class="msg-avatar avatar-agent">SM</div>
+          <div class="msg-body">
+            <div class="msg-meta">
+              <span class="msg-name">SecurityMesh Agent</span>
+              <span class="msg-time">09:42:01</span>
+            </div>
+            <div class="msg-text">
+              DevSecOps Security Mesh initialized. I have full context of your notebook covering <code>SAST</code>, <code>SCA</code>, <code>Container Scanning</code>, <code>DAST</code>, <code>Auth/RBAC</code>, <code>Encryption</code>, <code>Threat Modeling</code>, and <code>Privacy by Design</code>.<br><br>
+              Starting with SAST — Bandit scan of <code>vulnerable_app.py</code> found 3 issues. Pulling results now.
+            </div>
+
+            <div class="tool-call">
+              <div class="tool-header">⚡ tool_call: bandit_scan</div>
+              <div class="tool-content">target="vulnerable_app.py" · format="json" · severity_threshold="LOW"</div>
+            </div>
+
+            <div class="result-block" id="sast-results">
+              <div class="result-header">
+                <span>🔍</span> Bandit SAST — 3 Findings
+              </div>
+              <div class="finding-row">
+                <span class="sev sev-high">HIGH</span>
+                <div>
+                  <div class="finding-desc">OS command injection via <code>subprocess.call(shell=True)</code> — unsanitized <code>command</code> arg passed directly to shell</div>
+                  <div class="finding-loc">vulnerable_app.py · line 5 · CWE-78 · B602</div>
+                </div>
+              </div>
+              <div class="finding-row">
+                <span class="sev sev-high">HIGH</span>
+                <div>
+                  <div class="finding-desc">Hard-coded password <code>"my_super_secret_password"</code> in source code</div>
+                  <div class="finding-loc">vulnerable_app.py · line 10 · CWE-798 · B105</div>
+                </div>
+              </div>
+              <div class="finding-row">
+                <span class="sev sev-med">MED</span>
+                <div>
+                  <div class="finding-desc">Use of <code>eval(user_input)</code> allows arbitrary code execution</div>
+                  <div class="finding-loc">vulnerable_app.py · line 15 · CWE-94 · B307</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-avatar avatar-agent">SM</div>
+          <div class="msg-body">
+            <div class="msg-meta">
+              <span class="msg-name">SecurityMesh Agent</span>
+              <span class="msg-time">09:42:04</span>
+            </div>
+            <div class="msg-text">
+              Remediation applied in <code>remediated_app.py</code>. Re-scan confirmed: 0 Bandit findings. Summary of fixes:
+              <br><br>
+              • <code>shell=True</code> → removed; command passed as list to <code>subprocess.run()</code><br>
+              • Hard-coded credential → replaced with <code>os.getenv("APP_PASSWORD")</code><br>
+              • <code>eval()</code> → replaced with <code>ast.literal_eval()</code> for safe literal parsing
+            </div>
+
+            <div class="score-grid" style="margin-top:10px;">
+              <div class="score-card">
+                <div class="score-val" style="color:#ff6b6b;">3</div>
+                <div class="score-label">Issues found</div>
+              </div>
+              <div class="score-card">
+                <div class="score-val" style="color:#00d4aa;">0</div>
+                <div class="score-label">After fix</div>
+              </div>
+              <div class="score-card">
+                <div class="score-val" style="color:#ffc455;">2</div>
+                <div class="score-label">HIGH rem.</div>
+              </div>
+              <div class="score-card">
+                <div class="score-val" style="color:#4fa3ff;">1</div>
+                <div class="score-label">MED rem.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typing indicator placeholder -->
+        <div id="typing-indicator" style="display:none;" class="msg">
+          <div class="msg-avatar avatar-agent">SM</div>
+          <div class="msg-body">
+            <div class="msg-meta">
+              <span class="msg-name">SecurityMesh Agent</span>
+            </div>
+            <div class="typing">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- INPUT AREA -->
+      <div class="input-area">
+        <div class="quick-actions">
+          <button class="qa-btn" onclick="sendQuick('Run full pipeline scan and show CI/CD gate status')">⚙ Run pipeline</button>
+          <button class="qa-btn" onclick="sendQuick('Show SCA dependency vulnerabilities from pip-audit')">📦 SCA deps</button>
+          <button class="qa-btn" onclick="sendQuick('Explain the DAST findings and remediation steps')">🌐 DAST report</button>
+          <button class="qa-btn" onclick="sendQuick('Show STRIDE threat model for the web application')">⚠ Threat model</button>
+          <button class="qa-btn" onclick="sendQuick('What encryption methods are implemented for data at rest and transit?')">🔒 Encryption</button>
+          <button class="qa-btn" onclick="sendQuick('Generate executive security summary with risk score')">📊 Exec summary</button>
+        </div>
+        <div class="input-row">
+          <div class="input-wrap">
+            <textarea id="user-input" rows="1" placeholder="Ask about any security module, request a scan, or get remediation guidance…" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+          </div>
+          <button class="send-btn" onclick="sendMessage()" title="Send">➤</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <aside class="right-panel">
+      <div class="panel-header">Pipeline & Threat Status</div>
+      <div class="panel-body">
+
+        <div class="section-label">CI/CD Gates</div>
+        <div class="pipeline" id="pipeline">
+          <div class="pipe-stage">
+            <div class="pipe-icon" style="background:rgba(0,212,170,0.12);">✓</div>
+            <span class="pipe-name">SAST (Bandit)</span>
+            <span class="pipe-status pass">PASS</span>
+          </div>
+          <div class="pipe-stage">
+            <div class="pipe-icon" style="background:rgba(255,196,85,0.12);">!</div>
+            <span class="pipe-name">SCA (pip-audit)</span>
+            <span class="pipe-status warn">WARN</span>
+          </div>
+          <div class="pipe-stage">
+            <div class="pipe-icon" style="background:rgba(255,107,107,0.12);">✗</div>
+            <span class="pipe-name">Container (Grype)</span>
+            <span class="pipe-status fail">FAIL</span>
+          </div>
+          <div class="pipe-stage">
+            <div class="pipe-icon" style="background:rgba(255,107,107,0.12);">✗</div>
+            <span class="pipe-name">DAST</span>
+            <span class="pipe-status fail">FAIL</span>
+          </div>
+          <div class="pipe-stage">
+            <div class="pipe-icon" style="background:rgba(0,212,170,0.12);">✓</div>
+            <span class="pipe-name">Auth / RBAC</span>
+            <span class="pipe-status pass">PASS</span>
+          </div>
+          <div class="pipe-stage">
+            <div class="pipe-icon" style="background:rgba(0,212,170,0.12);">✓</div>
+            <span class="pipe-name">Encryption</span>
+            <span class="pipe-status pass">PASS</span>
+          </div>
+          <div class="pipe-stage">
+            <div class="pipe-icon" style="background:rgba(79,163,255,0.12);">↻</div>
+            <span class="pipe-name">Deploy to Prod</span>
+            <span class="pipe-status fail">BLOCKED</span>
+          </div>
+        </div>
+
+        <div class="section-label">STRIDE Threat Radar</div>
+        <div class="threat-meter">
+          <div class="threat-label">Risk exposure by category</div>
+          <div class="threat-bars">
+            <div class="threat-row">
+              <span class="threat-name">Spoofing</span>
+              <div class="bar-track"><div class="bar-fill" style="width:30%;background:#4fa3ff;"></div></div>
+              <span class="threat-pct">30%</span>
+            </div>
+            <div class="threat-row">
+              <span class="threat-name">Tampering</span>
+              <div class="bar-track"><div class="bar-fill" style="width:65%;background:#ffc455;"></div></div>
+              <span class="threat-pct">65%</span>
+            </div>
+            <div class="threat-row">
+              <span class="threat-name">Repudiation</span>
+              <div class="bar-track"><div class="bar-fill" style="width:20%;background:#00d4aa;"></div></div>
+              <span class="threat-pct">20%</span>
+            </div>
+            <div class="threat-row">
+              <span class="threat-name">Info Disc.</span>
+              <div class="bar-track"><div class="bar-fill" style="width:80%;background:#ff6b6b;"></div></div>
+              <span class="threat-pct">80%</span>
+            </div>
+            <div class="threat-row">
+              <span class="threat-name">DoS</span>
+              <div class="bar-track"><div class="bar-fill" style="width:45%;background:#ffc455;"></div></div>
+              <span class="threat-pct">45%</span>
+            </div>
+            <div class="threat-row">
+              <span class="threat-name">Elevation</span>
+              <div class="bar-track"><div class="bar-fill" style="width:55%;background:#b96eff;"></div></div>
+              <span class="threat-pct">55%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-label">Overall Posture</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-family:var(--display);font-size:36px;font-weight:700;color:#ffc455;margin-bottom:4px;">C+</div>
+          <div style="font-size:11px;color:var(--muted);">Security posture score</div>
+          <div style="margin-top:10px;font-size:11px;color:#ff6b6b;">2 critical gates blocking deploy</div>
+        </div>
+
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script>
+const responses = {
+  'SAST': {
+    title: 'SAST Analysis',
+    path: 'bandit / vulnerable_app.py',
+    reply: 'SAST scan complete. Bandit found 3 issues in <code>vulnerable_app.py</code>: 2 HIGH (command injection B602, hardcoded credentials B105) and 1 MEDIUM (unsafe eval B307). After applying remediations to <code>remediated_app.py</code>, a re-scan returns 0 findings. Gate status: <span style="color:#00d4aa">PASS ✓</span>'
+  },
+  'SCA': {
+    title: 'SCA / Dependencies',
+    path: 'pip-audit / requirements.txt',
+    reply: 'pip-audit SCA scan found <b>7 CVEs</b> across project dependencies. Critical packages include outdated <code>cryptography</code> and <code>Pillow</code> versions with known exploits. Recommended: pin upgraded versions and add <code>pip-audit</code> to your CI/CD pre-commit hook. Gate status: <span style="color:#ffc455">WARN ⚠</span>'
+  },
+  'Container': {
+    title: 'Container Security',
+    path: 'Grype / debian:stretch-slim',
+    reply: 'Grype container scan against <code>debian:stretch-slim</code> returned <b>critical vulnerabilities</b> — this base image (Debian 9 Stretch) is EOL and has hundreds of unpatched CVEs. Remediation: migrate to <code>debian:bookworm-slim</code> or a distroless base. Gate status: <span style="color:#ff6b6b">FAIL ✗</span>'
+  },
+  'DAST': {
+    title: 'DAST',
+    path: 'OWASP ZAP / localhost:8000',
+    reply: 'DAST scan found 2 vulnerabilities in the running application: (1) <b>Information Disclosure</b> — <code>/sensitive-info</code> endpoint exposes database connection strings; (2) <b>SQL Injection</b> — <code>POST /login</code> is susceptible to classic <code>\' OR \'1\'=\'1</code> payload. Both require immediate remediation before production deploy. Gate status: <span style="color:#ff6b6b">FAIL ✗</span>'
+  },
+  'Secrets': {
+    title: 'Secret Management',
+    path: 'HashiCorp Vault / env vars',
+    reply: 'Secret management practices are sound. API keys are loaded via <code>NVIDIA_API_KEY</code> from environment / Colab Secrets Manager. No hard-coded secrets detected post-remediation. For production, recommend migrating to HashiCorp Vault with dynamic secrets and lease TTLs. Gate status: <span style="color:#00d4aa">PASS ✓</span>'
+  },
+  'Auth': {
+    title: 'Auth & RBAC',
+    path: 'bcrypt / RBAC engine',
+    reply: 'Authentication is implemented using <code>bcrypt</code> for password hashing (work factor 12). RBAC engine grants role-based access across admin, editor, and viewer tiers. Advanced patterns discussed: MFA via TOTP, OAuth 2.0 flows, and SSO with SAML 2.0. Gate status: <span style="color:#00d4aa">PASS ✓</span>'
+  },
+  'Encryption': {
+    title: 'Data Encryption',
+    path: 'Fernet / TLS / pandas anonymization',
+    reply: 'Encryption at rest uses <code>cryptography.Fernet</code> (AES-128-CBC + HMAC-SHA256). Encryption in transit is enforced via self-signed TLS with mutual verification. Data anonymization uses pseudonymization and k-anonymity generalization via <code>pandas</code>. All 7 Privacy by Design principles implemented. Gate status: <span style="color:#00d4aa">PASS ✓</span>'
+  },
+  'Threat': {
+    title: 'Threat Modeling',
+    path: 'STRIDE / web application',
+    reply: 'STRIDE threat model applied to the web application. Highest-risk findings: <b>Information Disclosure</b> (80% exposure — sensitive endpoint unsecured) and <b>Tampering</b> (65% — input validation gaps). Countermeasures mapped for all 6 STRIDE categories. Recommend formal threat review in sprint planning cadence.'
+  },
+  'Privacy': {
+    title: 'Privacy by Design',
+    path: 'PbD / 7 principles',
+    reply: 'All 7 Privacy by Design principles are addressed: (1) Proactive, (2) Privacy as Default, (3) Privacy Embedded, (4) Full Functionality, (5) End-to-End Security, (6) Visibility & Transparency, (7) Respect for User Privacy. PII handling uses pseudonymization; users have data-access dashboards; retention and deletion policies defined.'
+  },
+  'CICD': {
+    title: 'CI/CD Gates',
+    path: 'pipeline / deploy status',
+    reply: 'CI/CD pipeline status: SAST ✓ PASS · SCA ⚠ WARN (outdated deps) · Container ✗ FAIL (EOL base image) · DAST ✗ FAIL (SQL injection + info disclosure). <b>Production deploy is BLOCKED</b> until Container and DAST gates clear. Fix path: update base image → re-run Grype; patch login endpoint → re-run DAST.'
+  }
+};
+
+const moduleMessages = {
+  'Run full pipeline scan and show CI/CD gate status': 'Running all 6 CI/CD security gates sequentially...\n\nSAST → PASS ✓\nSCA → WARN ⚠ (7 CVEs in deps)\nContainer → FAIL ✗ (EOL base image: debian:stretch)\nDAST → FAIL ✗ (SQLi at /login, info disclosure at /sensitive-info)\nAuth/RBAC → PASS ✓\nEncryption → PASS ✓\n\n<b>Deploy to production is BLOCKED.</b> 2 gates must clear first.',
+  'Show SCA dependency vulnerabilities from pip-audit': 'pip-audit returned 7 CVEs. Notable: <code>cryptography&lt;41.0.7</code> — CVE-2023-49083 (NULL pointer deref, HIGH); <code>Pillow&lt;10.2.0</code> — multiple CVEs (CRIT image parsing). Recommended fix: <code>pip install --upgrade cryptography Pillow</code> and re-lock with <code>pip freeze > requirements.txt</code>.',
+  'Explain the DAST findings and remediation steps': 'DAST found 2 issues:\n\n1. <b>SQL Injection</b> at <code>POST /login</code> — Payload <code>\' OR \'1\'=\'1</code> bypasses authentication. Fix: use parameterized queries / ORM; never interpolate user input into SQL.\n\n2. <b>Information Disclosure</b> at <code>GET /sensitive-info</code> — DB connection string exposed in HTML response. Fix: remove endpoint; move credentials to Vault; add route authentication.',
+  'Show STRIDE threat model for the web application': 'STRIDE applied to the web app:\n\n• <b>Spoofing</b> — weak session tokens; fix: use cryptographically random UUIDs + HttpOnly cookies\n• <b>Tampering</b> — no CSRF tokens on forms; fix: add CSRF middleware\n• <b>Repudiation</b> — limited audit logging; fix: log all state-changing operations\n• <b>Info Disclosure</b> — <code>/sensitive-info</code> endpoint; fix: delete route\n• <b>DoS</b> — no rate limiting; fix: add nginx rate limiting / WAF\n• <b>Elevation</b> — RBAC gaps on admin paths; fix: enforce role checks middleware-level',
+  'What encryption methods are implemented for data at rest and transit?': 'Data at rest: <code>cryptography.Fernet</code> — symmetric AES-128-CBC with HMAC-SHA256 message authentication. Key derived from a securely stored secret. \n\nData in transit: HTTPS/TLS via self-signed certificate + mutual TLS client verification between server and SDK client.\n\nAdditionally: PII in analytics pipelines is pseudonymized (SHA-256 hash of user IDs) and k-anonymized via pandas generalization.',
+  'Generate executive security summary with risk score': 'Executive Security Summary:\n\n<b>Overall Posture: C+ (Elevated Risk)</b>\n\n✓ Strengths: SAST remediated (0 findings), auth hardened with bcrypt+RBAC, encryption-at-rest and TLS in place, full PbD compliance.\n\n✗ Blockers: EOL container base image (Grype CRIT); DAST found exploitable SQLi and info disclosure; 7 SCA CVEs pending update.\n\nRecommended actions (priority order):\n1. Migrate container to <code>debian:bookworm-slim</code>\n2. Patch <code>/login</code> SQLi with parameterized queries\n3. Remove <code>/sensitive-info</code> endpoint\n4. Upgrade pinned dependencies'
+};
+
+let currentModule = 'SAST';
+
+function switchModule(el, mod) {
+  document.querySelectorAll('.module-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  currentModule = mod;
+  const info = responses[mod];
+  document.getElementById('topbar-title').textContent = info.title;
+  document.getElementById('topbar-path').textContent = info.path;
+  addMessage('user', `Show me the ${info.title} results`);
+  showTyping();
+  setTimeout(() => {
+    hideTyping();
+    addMessage('agent', info.reply);
+  }, 900);
+}
+
+function addMessage(role, text) {
+  const msgs = document.getElementById('messages');
+  const typing = document.getElementById('typing-indicator');
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.innerHTML = `
+    <div class="msg-avatar ${role === 'agent' ? 'avatar-agent' : 'avatar-user'}">${role === 'agent' ? 'SM' : 'U'}</div>
+    <div class="msg-body">
+      <div class="msg-meta">
+        <span class="msg-name">${role === 'agent' ? 'SecurityMesh Agent' : 'You'}</span>
+        <span class="msg-time">${time}</span>
+      </div>
+      <div class="msg-text">${text}</div>
+    </div>
+  `;
+  msgs.insertBefore(div, typing);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  document.getElementById('typing-indicator').style.display = 'flex';
+  document.getElementById('messages').scrollTop = 999999;
+}
+
+function hideTyping() {
+  document.getElementById('typing-indicator').style.display = 'none';
+}
+
+function sendMessage() {
+  const inp = document.getElementById('user-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  inp.style.height = '';
+  processMessage(text);
+}
+
+function sendQuick(text) {
+  processMessage(text);
+}
+
+function processMessage(text) {
+  addMessage('user', text);
+  showTyping();
+  setTimeout(() => {
+    hideTyping();
+    const reply = moduleMessages[text] || generateReply(text);
+    addMessage('agent', reply);
+  }, 800 + Math.random() * 600);
+}
+
+function generateReply(text) {
+  const lower = text.toLowerCase();
+  if (lower.includes('sast') || lower.includes('bandit') || lower.includes('static')) return responses['SAST'].reply;
+  if (lower.includes('sca') || lower.includes('depend') || lower.includes('pip')) return responses['SCA'].reply;
+  if (lower.includes('container') || lower.includes('docker') || lower.includes('grype')) return responses['Container'].reply;
+  if (lower.includes('dast') || lower.includes('dynamic') || lower.includes('runtime')) return responses['DAST'].reply;
+  if (lower.includes('secret') || lower.includes('vault') || lower.includes('api key')) return responses['Secrets'].reply;
+  if (lower.includes('auth') || lower.includes('rbac') || lower.includes('login') || lower.includes('bcrypt')) return responses['Auth'].reply;
+  if (lower.includes('encrypt') || lower.includes('fernet') || lower.includes('tls') || lower.includes('https')) return responses['Encryption'].reply;
+  if (lower.includes('threat') || lower.includes('stride')) return responses['Threat'].reply;
+  if (lower.includes('privacy') || lower.includes('pbd') || lower.includes('gdpr') || lower.includes('pii')) return responses['Privacy'].reply;
+  if (lower.includes('ci') || lower.includes('pipeline') || lower.includes('deploy') || lower.includes('gate')) return responses['CICD'].reply;
+  return `Running analysis for: <em>"${text}"</em>\n\nBased on your DevSecOps Security Mesh notebook, I can analyze SAST findings (Bandit), SCA dependencies (pip-audit), Container vulnerabilities (Grype), DAST results (SQLi, Info Disclosure), Secret Management, Authentication/RBAC (bcrypt), Encryption (Fernet/TLS), Threat Modeling (STRIDE), Privacy by Design, and CI/CD gate status. Which module would you like to drill into?`;
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+</script>
+</body>
+</html>
