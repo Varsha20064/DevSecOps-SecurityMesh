@@ -2,6 +2,9 @@
 
 This notebook provides a comprehensive exploration of essential DevSecOps practices, demonstrating how to integrate security throughout the software development lifecycle. It covers static analysis, container security, dependency scanning, secret management, input validation, security testing, CI/CD integration, threat modeling, authentication/authorization, and data security.
 
+<img width="1366" height="645" alt="image" src="https://github.com/user-attachments/assets/df6e8c94-b61f-4bb0-95af-01b3f808c56a" />
+
+
 ## Table of Contents
 
 1.  [Python Static Analysis (Bandit)](#python-static-analysis-bandit)
